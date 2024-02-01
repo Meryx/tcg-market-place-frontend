@@ -7,6 +7,8 @@ import {
   Button,
 } from "@fluentui/react-components";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setEmail } from "../features/user/userSlice"; // Adjust the import path according to your file structure
 
 import { useNavigate, NavLink } from "react-router-dom";
 
@@ -55,7 +57,31 @@ const useStyles = makeStyles({
   },
 });
 
+const submit = async (dispatch, email, password, navigate) => {
+  const payload = { email, password };
+  try {
+    const response = await axios.post(`${API_URL}/auth/login`, payload);
+    const {
+      data: { message },
+    } = response;
+    console.log(message);
+    localStorage.setItem("token", response.data.JWT);
+    const token = localStorage.getItem("token");
+    const userInfoReponse = await axios.get(`${API_URL}/user/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const { email } = userInfoReponse.data;
+    dispatch(setEmail(email));
+    navigate("/");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const Login = () => {
+  const dispatch = useDispatch();
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -66,27 +92,7 @@ const Login = () => {
   const styles = useStyles();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const submit = async () => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-      const {
-        data: { message },
-      } = response;
-      console.log(message);
-      localStorage.setItem("token", response.data.JWT);
-      navigate("/");
-    } catch (error) {
-      const {
-        response: {
-          data: { message },
-        },
-      } = error;
-      console.log(message);
-    }
-  };
+
   return (
     <div className={styles.container}>
       <div className={styles.main}>
@@ -120,7 +126,7 @@ const Login = () => {
           appearance="primary"
           size="large"
           className={styles.createAccountButton}
-          onClick={submit}
+          onClick={() => submit(dispatch, email, password, navigate)}
         >
           Sign In
         </Button>
