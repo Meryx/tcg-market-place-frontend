@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 
 import { useNavigate, NavLink } from "react-router-dom";
+import { ErrorCircle20Filled } from "@fluentui/react-icons";
 
 const API_URL = process.env.API_URL;
 
@@ -52,6 +53,22 @@ const useStyles = makeStyles({
     ...shorthands.textDecoration("none"),
     color: "#0078d4",
   },
+  iconContainer: {
+    display: "flex",
+    alignItems: "center",
+    color: "#d30311",
+  },
+  icon: {
+    position: "absolute",
+    left: "-2px",
+    top: "-10px",
+  },
+  relativeContainer: {
+    position: "relative",
+  },
+  errorMessage: {
+    marginLeft: "28px",
+  },
 });
 
 const Signup = () => {
@@ -59,6 +76,8 @@ const Signup = () => {
   const styles = useStyles();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showError, setShowError] = useState(false);
   const submit = async () => {
     try {
       const response = await axios.post(`${API_URL}/auth/register`, {
@@ -71,12 +90,12 @@ const Signup = () => {
       console.log(message);
       navigate("/login");
     } catch (error) {
-      const {
-        response: {
-          data: { message },
-        },
-      } = error;
-      console.log(message);
+      if (error.response) {
+        setError(error.response.data.message);
+        setShowError(true);
+      } else {
+        console.log(error);
+      }
     }
   };
   return (
@@ -84,6 +103,16 @@ const Signup = () => {
       <div className={styles.main}>
         <div className={styles.heading}>Create an Account</div>
         <div className={styles.fieldContainer}>
+          <div className={styles.iconContainer}>
+            {showError && (
+              <>
+                <div className={styles.relativeContainer}>
+                  <ErrorCircle20Filled className={styles.icon} />
+                </div>
+                <div className={styles.errorMessage}>{error}</div>
+              </>
+            )}
+          </div>
           <Field label="Email" className={styles.field}>
             <Input
               type="email"

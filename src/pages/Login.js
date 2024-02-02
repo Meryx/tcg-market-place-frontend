@@ -11,6 +11,7 @@ import { useDispatch } from "react-redux";
 import { setEmail } from "../features/user/userSlice"; // Adjust the import path according to your file structure
 
 import { useNavigate, NavLink } from "react-router-dom";
+import { ErrorCircle20Filled } from "@fluentui/react-icons";
 
 const API_URL = process.env.API_URL;
 
@@ -55,9 +56,32 @@ const useStyles = makeStyles({
     ...shorthands.textDecoration("none"),
     color: "#0078d4",
   },
+  iconContainer: {
+    display: "flex",
+    alignItems: "center",
+    color: "#d30311",
+  },
+  icon: {
+    position: "absolute",
+    left: "-2px",
+    top: "-10px",
+  },
+  relativeContainer: {
+    position: "relative",
+  },
+  errorMessage: {
+    marginLeft: "28px",
+  },
 });
 
-const submit = async (dispatch, email, password, navigate) => {
+const submit = async ({
+  dispatch,
+  email,
+  password,
+  navigate,
+  setError,
+  setShowError,
+}) => {
   const payload = { email, password };
   try {
     const response = await axios.post(`${API_URL}/auth/login`, payload);
@@ -76,7 +100,12 @@ const submit = async (dispatch, email, password, navigate) => {
     dispatch(setEmail(email));
     navigate("/");
   } catch (error) {
-    console.log(error);
+    if (error.response) {
+      setError(error.response.data.message);
+      setShowError(true);
+    } else {
+      console.log(error);
+    }
   }
 };
 
@@ -92,12 +121,24 @@ const Login = () => {
   const styles = useStyles();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [showError, setShowError] = useState(false);
 
   return (
     <div className={styles.container}>
       <div className={styles.main}>
         <div className={styles.heading}>Sign in to TCGStore</div>
         <div className={styles.fieldContainer}>
+          <div className={styles.iconContainer}>
+            {showError && (
+              <>
+                <div className={styles.relativeContainer}>
+                  <ErrorCircle20Filled className={styles.icon} />
+                </div>
+                <div className={styles.errorMessage}>{error}</div>
+              </>
+            )}
+          </div>
           <Field label="Email" className={styles.field}>
             <Input
               type="email"
@@ -126,7 +167,16 @@ const Login = () => {
           appearance="primary"
           size="large"
           className={styles.createAccountButton}
-          onClick={() => submit(dispatch, email, password, navigate)}
+          onClick={() =>
+            submit({
+              dispatch,
+              email,
+              password,
+              navigate,
+              setError,
+              setShowError,
+            })
+          }
         >
           Sign In
         </Button>
